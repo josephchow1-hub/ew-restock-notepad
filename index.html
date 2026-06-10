@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#11385f">
+<title>Restock Notepad · Everything Wine</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Restock+Notepad%22%2C%22short_name%22%3A%22Restock%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23EFE7D8%22%2C%22theme_color%22%3A%22%2311385f%22%7D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF7EF;--page:#EFE7D8;--ink:#2A2320;--ink-soft:#7A6F64;--ink-faint:#B6A998;
+    --line:#E6DCCB;--line-strong:#D8CCB6;--wine:#11385f;--wine-dark:#0b2a47;
+    --gold:#C49A4A;--gold-dark:#a07a32;--sans:'Hanken Grotesk',system-ui,sans-serif;--serif:'Marcellus',Georgia,serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    background:radial-gradient(120% 80% at 50% -10%,#F6EFE2 0%,var(--page) 60%) fixed;
+    color:var(--ink);min-height:100vh;display:flex;justify-content:center;
+    padding:32px 16px 40px;-webkit-font-smoothing:antialiased;
+  }
+  .screen{
+    background:var(--paper);border-radius:18px;border:1px solid var(--line-strong);
+    box-shadow:0 1px 0 rgba(255,255,255,0.6) inset,0 18px 50px -24px rgba(60,30,20,0.45);
+    overflow:hidden;width:100%;max-width:480px;align-self:flex-start;
+  }
+
+  /* Masthead */
+  .masthead{padding:22px 22px 18px;border-bottom:1px solid var(--line);position:relative;}
+  .masthead::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;
+    background:linear-gradient(90deg,var(--wine) 0%,var(--wine) 60%,var(--gold) 60%,var(--gold) 100%);opacity:0.9;}
+  .brand-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .brand-mark{width:30px;height:30px;border-radius:50%;background:var(--wine);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brand-mark span{font-family:var(--serif);color:#F6E3C8;font-size:15px;line-height:1;}
+  .brand-over{font-size:10.5px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:var(--wine);}
+  .brand-sub{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .masthead h1{font-family:var(--serif);font-weight:400;font-size:28px;color:var(--wine);}
+  .masthead p{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+
+  /* Input area */
+  .input-area{padding:18px 20px;border-bottom:1px solid var(--line);background:#fff;display:flex;flex-direction:column;gap:12px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  .inp{
+    width:100%;height:44px;border:1.5px solid var(--line-strong);border-radius:10px;
+    padding:0 13px;font-size:15px;font-family:var(--sans);color:var(--ink);
+    background:var(--paper);-webkit-appearance:none;transition:border-color .15s,box-shadow .15s;
+  }
+  .inp:focus{outline:none;border-color:var(--wine);background:#fff;box-shadow:0 0 0 3px rgba(17,56,95,0.1);}
+  .inp::placeholder{color:var(--ink-faint);}
+  .inp-qty{text-align:center;}
+  .add-btn{
+    width:100%;height:48px;background:var(--gold);color:#fff;border:none;
+    border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;
+    font-family:var(--sans);letter-spacing:0.03em;
+    transition:background .15s,transform .08s;-webkit-tap-highlight-color:transparent;
+  }
+  .add-btn:hover{background:var(--gold-dark);}
+  .add-btn:active{background:var(--gold-dark);transform:scale(0.98);}
+
+  /* Table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:#F5F0E6;border-bottom:1.5px solid var(--line-strong);}
+  thead th{
+    font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--ink-faint);padding:9px 10px;text-align:left;white-space:nowrap;
+  }
+  thead th.center{text-align:center;}
+  tbody tr{border-bottom:1px solid var(--line);transition:background .1s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#FDFAF4;}
+  tbody tr.done{background:#FAFAF6;}
+  tbody tr.done .cell-name{text-decoration:line-through;color:var(--ink-faint);}
+  tbody tr.done .cell-sku,tbody tr.done .cell-qty{color:var(--line-strong);}
+  td{padding:11px 10px;font-size:13.5px;color:var(--ink);vertical-align:middle;}
+  .cell-check{width:38px;padding:11px 4px 11px 14px;}
+  .cell-name{font-weight:500;}
+  .cell-sku{color:var(--ink-soft);font-size:12.5px;}
+  .cell-qty{text-align:center;font-weight:700;color:var(--wine);font-size:15px;}
+  .qty-input{
+    width:54px;height:34px;border:1.5px solid var(--wine);border-radius:8px;
+    text-align:center;font-size:15px;font-weight:700;color:var(--wine);
+    font-family:var(--sans);background:#fff;-webkit-appearance:none;
+  }
+  .qty-input:focus{outline:none;box-shadow:0 0 0 3px rgba(17,56,95,0.1);}
+  .cell-del{width:38px;padding:11px 14px 11px 4px;text-align:right;}
+
+  .check-box{
+    width:22px;height:22px;border-radius:5px;border:1.5px solid var(--line-strong);
+    background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:#fff;transition:background .12s,border-color .12s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .check-box.ticked{background:var(--wine);border-color:var(--wine);}
+  .del-btn{
+    background:none;border:none;color:var(--line-strong);font-size:20px;
+    cursor:pointer;line-height:1;padding:0;transition:color .12s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .del-btn:hover{color:#c0392b;}
+
+  .empty-row td{
+    text-align:center;color:var(--ink-faint);font-size:13px;
+    padding:36px 16px;font-style:italic;
+  }
+
+  /* Footer */
+  .footer-bar{
+    padding:12px 20px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+    background:linear-gradient(180deg,#FFFDF8,var(--paper));
+  }
+  .count{font-size:12px;color:var(--ink-faint);}
+  .footer-actions{display:flex;gap:12px;}
+  .action-btn{
+    font-size:12px;font-weight:600;color:var(--ink-faint);
+    background:none;border:none;cursor:pointer;font-family:var(--sans);
+    transition:color .12s;
+  }
+  .action-btn:hover{color:var(--wine);}
+  .action-btn.danger:hover{color:#c0392b;}
+
+  footer{
+    border-top:1px solid var(--line);padding:13px 22px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  footer span{font-size:11px;color:var(--ink-faint);}
+  footer a{font-size:11px;font-weight:600;color:var(--ink-soft);text-decoration:none;}
+  footer a:hover{color:var(--wine);}
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <div class="masthead">
+    <div class="brand-row">
+      <div class="brand-mark"><span>EW</span></div>
+      <div>
+        <div class="brand-over">Everything Wine</div>
+        <div class="brand-sub">River District Vancouver</div>
+      </div>
+    </div>
+    <h1>Restock Notepad</h1>
+    <p>Track products that need filling on the floor. Saves automatically.</p>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="field">
+      <label>Product Name</label>
+      <input class="inp" type="text" id="inpName" placeholder="e.g. Cloudy Bay Sauvignon Blanc" autocomplete="off" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>SKU</label>
+        <input class="inp" type="text" id="inpSku" placeholder="e.g. 48821" autocomplete="off" />
+      </div>
+      <div class="field" style="max-width:130px;">
+        <label>Bottles to fill</label>
+        <input class="inp inp-qty" type="number" id="inpQty" placeholder="0" min="1" />
+      </div>
+    </div>
+    <button class="add-btn" onclick="addRow()">+ Add to list</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Product Name</th>
+          <th>SKU</th>
+          <th class="center">Bottles</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Footer bar -->
+  <div class="footer-bar">
+    <span class="count" id="countLabel">0 items</span>
+    <div class="footer-actions">
+      <button class="action-btn" onclick="clearDone()">Clear done</button>
+      <button class="action-btn danger" onclick="clearAll()">Clear all</button>
+    </div>
+  </div>
+
+  <footer>
+    <span>Everything Wine · Internal use only</span>
+    <a href="https://www.everythingwine.ca" target="_blank">everythingwine.ca ↗</a>
+  </footer>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'ew_restock_v1';
+
+  // ── Load from localStorage ──
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function save(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function getData() {
+    const rows = document.querySelectorAll('#tableBody tr:not(.empty-row)');
+    return Array.from(rows).map(tr => ({
+      name: tr.dataset.name,
+      sku: tr.dataset.sku,
+      qty: tr.dataset.qty,
+      done: tr.classList.contains('done')
+    }));
+  }
+
+  function renderAll(items) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    if (!items.length) {
+      showEmpty();
+    } else {
+      items.forEach(item => appendRow(item.name, item.sku, item.qty, item.done));
+    }
+    updateCount();
+  }
+
+  function showEmpty() {
+    const tbody = document.getElementById('tableBody');
+    const tr = document.createElement('tr');
+    tr.className = 'empty-row';
+    tr.innerHTML = '<td colspan="5">No items yet — add a product above</td>';
+    tbody.appendChild(tr);
+  }
+
+  function appendRow(name, sku, qty, done = false) {
+    const tbody = document.getElementById('tableBody');
+    const emptyRow = tbody.querySelector('.empty-row');
+    if (emptyRow) emptyRow.remove();
+
+    const tr = document.createElement('tr');
+    if (done) tr.classList.add('done');
+    tr.dataset.name = name;
+    tr.dataset.sku = sku;
+    tr.dataset.qty = qty;
+
+    tr.innerHTML = `
+      <td class="cell-check">
+        <div class="check-box${done ? ' ticked' : ''}" onclick="toggleRow(this)">${done ? '✓' : ''}</div>
+      </td>
+      <td class="cell-name">${escHtml(name)}</td>
+      <td class="cell-sku">${escHtml(sku) || '—'}</td>
+      <td class="cell-qty">
+        <input class="qty-input" type="number" value="${escHtml(qty) || ''}" placeholder="—" min="1"
+          onchange="saveFromDom()" oninput="saveFromDom()" />
+      </td>
+      <td class="cell-del"><button class="del-btn" onclick="delRow(this)" title="Remove">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function addRow() {
+    const name = document.getElementById('inpName').value.trim();
+    const sku = document.getElementById('inpSku').value.trim();
+    const qty = document.getElementById('inpQty').value.trim();
+    if (!name) { document.getElementById('inpName').focus(); return; }
+
+    appendRow(name, sku, qty, false);
+    document.getElementById('inpName').value = '';
+    document.getElementById('inpSku').value = '';
+    document.getElementById('inpQty').value = '';
+    document.getElementById('inpName').focus();
+
+    save(getData());
+    updateCount();
+  }
+
+  function toggleRow(el) {
+    const tr = el.closest('tr');
+    const done = tr.classList.toggle('done');
+    el.classList.toggle('ticked');
+    el.textContent = done ? '✓' : '';
+    save(getData());
+    updateCount();
+  }
+
+  function delRow(btn) {
+    const tbody = document.getElementById('tableBody');
+    btn.closest('tr').remove();
+    if (!tbody.querySelector('tr:not(.empty-row)')) showEmpty();
+    save(getData());
+    updateCount();
+  }
+
+  function clearDone() {
+    const tbody = document.getElementById('tableBody');
+    tbody.querySelectorAll('tr.done').forEach(r => r.remove());
+    if (!tbody.querySelector('tr:not(.empty-row)')) showEmpty();
+    save(getData());
+    updateCount();
+  }
+
+  function clearAll() {
+    if (!confirm('Clear all items from the notepad?')) return;
+    document.getElementById('tableBody').innerHTML = '';
+    showEmpty();
+    save([]);
+    updateCount();
+  }
+
+  function updateCount() {
+    const rows = document.querySelectorAll('#tableBody tr:not(.empty-row)');
+    const done = document.querySelectorAll('#tableBody tr.done');
+    const total = rows.length;
+    const label = total === 0
+      ? '0 items'
+      : `${total} item${total !== 1 ? 's' : ''} · ${done.length} done`;
+    document.getElementById('countLabel').textContent = label;
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Enter key on any input triggers Add
+  ['inpName','inpSku','inpQty'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') addRow();
+    });
+  });
+
+  // Init
+  renderAll(load());
+  document.getElementById('inpName').focus();
+</script>
+</body>
+</html>
